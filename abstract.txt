@@ -1,0 +1,14 @@
+Generic Full Duplex Messaging
+
+We've seen a lot in the realm of libraries for sockets and protocols for network communications, but what is there for bringing it all together?
+
+In this presentation, we will go through bringing together a combination of Boost.Asio, Boost.Hana, and the speaker's own Nbdl to demonstrate how to create a generic interface to a full duplex messaging system. We will look at how to create concrete implementations using different libraries providing anywhere from raw tcp to websockets. We will also touch on the complex task of managing object lifetimes with asynchronous operations.
+
+Anyone interested in network programming, or making generic interfaces in their libraries will find this presentation useful.
+
+OUTLINE:
+
+The Goal: Full Duplex Messaging
+Existing Libraries for Concrete Implementations
+Dealing with Object Lifetimes
+Generalizing the Interface
