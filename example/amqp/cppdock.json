@@ -1,0 +1,30 @@
+{
+  "cppdock": {
+    "name": "full_duplex_example_amqp"
+  },
+  "platforms": [
+    {
+      "name": "my_linux_x64", 
+      "type": "linux_x64", 
+      "deps": [
+        {
+          "tag": "refs/tags/1.8.1", 
+          "name": "open-source-parsers/jsoncpp", 
+          "revision": "a679dde58d675e75eaf0fe31f62e833868e2f22d"
+        }, 
+        {
+          "name": "copernicamarketingsoftware/amqp-cpp",
+          "tag": "master"
+        },
+        {
+          "tag": "master", 
+          "name": "chriskohlhoff/asio"
+        },
+        {
+          "name": "ricejasonf/full_duplex",
+          "tag": "master"
+        }
+      ]
+    }
+  ] 
+}
