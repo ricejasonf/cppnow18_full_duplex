@@ -24,5 +24,19 @@ FROM ricejasonf/cppdock:linux_x64 as boost_libraries
 #              linkflags="-stdlib=libc++" \
 #              --prefix=/opt/install 
 
+FROM ricejasonf/cppdock:linux_x64 as quick_project
+
+    RUN cppdock install_dep linux_x64 0307a4c25eea44330d20a42471c2b43530cfe530 ricejasonf/quick_project 
+
+FROM ricejasonf/cppdock:linux_x64 as build_all
+
+    COPY --from=quick_project /opt/install /usr/local
+    RUN cppdock install_dep linux_x64 684dfbd7dfbdd0438ef3670be10002ca33a71715 boostorg/callable_traits 
+    RUN cppdock install_dep linux_x64 7cd10e98bde41a2e197138cb423a6f983a66e645 boostorg/hana 
+    RUN cppdock install_dep linux_x64 1f52649a1b822c815239788cc528b469b3438985 ricejasonf/full_duplex
+
 FROM ricejasonf/cppdock:linux_x64
-    COPY --from=boost_libraries /opt/install/ /opt/sysroot
+    COPY --from=quick_project /opt/install /usr/local
+    COPY --from=boost_libraries /opt/install /opt/sysroot
+    COPY --from=build_all /opt/install /opt/sysroot
+
