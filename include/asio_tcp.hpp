@@ -77,12 +77,10 @@ namespace asio_tcp {
         template <typename Resolve, typename Input>
         auto operator()(Resolve& resolve, Input&&) {
             asio::async_read(self.state().socket, asio::buffer(buffer, 4), [&](auto error, size_t) {
-                uint32_t length = 
-                      buffer[0] << 24
-                    | buffer[1] << 16
-                    | buffer[2] << 8
-                    | buffer[3];
-
+                uint32_t length = buffer[0] << 24
+                                | buffer[1] << 16
+                                | buffer[2] << 8
+                                | buffer[3];
                 (not error) ? resolve(length) : resolve(make_error(error));
             });
         }
@@ -101,6 +99,7 @@ namespace asio_tcp {
     struct read_body_fn {
         template <typename Resolve>
         auto operator()(Resolve& resolve, uint32_t length) {
+            body.resize(length);
             asio::async_read(self.state().socket, asio::buffer(body, length), [&](auto error, size_t) {
                 (not error) ? resolve(body) : resolve(make_error(error));
             });

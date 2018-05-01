@@ -4,7 +4,6 @@
 // (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 //
-                                #include <iostream> 
 #include <asio_tcp.hpp>
 
 #include <boost/asio.hpp>
@@ -39,14 +38,14 @@ int main() {
             asio_tcp::raw_message,
             endpoint(
                 event::read_message = [](auto& self) {
-                    return promise([&](auto& resolve, auto&& msg) {
+                    return promise([&](auto& resolve, auto const& msg) {
                         if (msg == "terminate") {
                             resolve(full_duplex::terminate{});
                         } 
                         else {
                             // echo the message
                             self.send_message(msg);
-                            resolve(std::forward<decltype(msg)>(msg));
+                            resolve(msg);
                         }
                     });
                 },
@@ -68,7 +67,7 @@ int main() {
             endpoint(
                 event::read_message = [](auto&) {
                     return tap([](auto& msg) {
-                        std::cout << "msg: " << msg << '\n';
+                        std::cout << "MESSAGE: " << msg << '\n';
                     });
                 },
                 event::error = [](auto&) {
@@ -80,8 +79,8 @@ int main() {
         )
     );
 
-    //full_duplex::send_message(sender, std::string("message6"));
-    //full_duplex::send_message(sender, std::string("terminate"));
+    full_duplex::send_message(sender, std::string("message6"));
+    full_duplex::send_message(sender, std::string("terminate"));
 
     io.run();
 }
