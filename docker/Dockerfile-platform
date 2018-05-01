@@ -1,0 +1,28 @@
+FROM ricejasonf/cppdock:linux_x64 as boost_libraries
+    RUN apt-get update -y && apt-get install wget
+    WORKDIR /usr/local/src
+    RUN wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.gz \
+     && tar -xvzf boost_1_67_0.tar.gz
+
+    WORKDIR /usr/local/src/boost_1_67_0
+    RUN mkdir /opt/install/include \
+     && cp -R -t /opt/install/include boost
+
+#    RUN  ./bootstrap.sh \
+#              --with-toolset=clang \
+#              --prefix=/opt/install \
+#              --with-libraries=beast \
+#     &&  ./b2 clean \
+#     &&  ./b2 toolset=clang \ 
+#              cxxflags="-std=c++1z -stdlib=libc++" \
+#              linkflags="-stdlib=libc++" \
+#              --prefix=/opt/install \
+#              stage release \
+#     &&  ./b2 install \
+#              toolset=clang \
+#              cxxflags="-std=c++1z -stdlib=libc++" \
+#              linkflags="-stdlib=libc++" \
+#              --prefix=/opt/install 
+
+FROM ricejasonf/cppdock:linux_x64
+    COPY --from=boost_libraries /opt/install/ /opt/sysroot
