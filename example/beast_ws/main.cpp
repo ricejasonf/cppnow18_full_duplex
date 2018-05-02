@@ -61,7 +61,7 @@ int main() {
     );
 
     auto sender = endpoint_open(
-        asio_tcp::connect_state{io, 9081},
+        beast_ws::connect_state{io, 9081},
         std::move(messages),
         endpoint_compose(
             asio_tcp::connector,

@@ -7,8 +7,10 @@
 #ifndef CPPNOW18_FULL_DUPLEX_BEAST_WS_HPP
 #define CPPNOW18_FULL_DUPLEX_BEAST_WS_HPP
 
+#include <algorithm>
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
+#include <boost/utility/string_view.hpp>
 #include <cstdint>
 #include <full_duplex.hpp>
 #include <functional>
@@ -69,7 +71,7 @@ namespace beast_ws {
     constexpr auto send_handshake = [](auto&) {
         return promise([](auto& resolve, auto& self) {
             auto& state = self.state();
-            state.ws.async_handshake(std::string_view("foo"), std::string_view("/"),
+            state.ws.async_handshake(boost::string_view("foo"), boost::string_view("/"),
                 [&](auto error) {
                     (not error) ? resolve(self) : resolve(make_error(error));
                 });
@@ -82,19 +84,25 @@ namespace beast_ws {
     struct read_message_fn {
         template <typename Resolve, typename Input>
         void operator()(Resolve& resolve, Input&&) {
-            self.state().ws.async_read(asio::dynamic_string_buffer(body),
-                [&](auto error, size_t) {
-                    (not error) ? resolve(body) : resolve(make_error(error));
-                });
+            self.state().ws.async_read(buffer, [&](auto error, size_t) {
+                auto mut_buf = buffer.data();
+                std::string_view buffer_view(static_cast<char const*>(mut_buf.data()), mut_buf.size());
+                body.resize(buffer_view.size());
+                std::copy(buffer_view.begin(), buffer_view.end(), body.begin()); // :(
+                buffer.consume(buffer.size());
+                (not error) ? resolve(body) : resolve(make_error(error));
+            });
         }
 
         explicit read_message_fn(Self& s)
             : self(s)
             , body()
+            , buffer()
         { }
 
         Self& self;
         std::string body;
+        boost::beast::flat_buffer buffer;
     };
 
     constexpr auto read_message = [](auto& self) {
