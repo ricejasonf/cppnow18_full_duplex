@@ -5,6 +5,7 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <asio_tcp.hpp>
+#include <beast_ws.hpp>
 
 #include <boost/asio.hpp>
 #include <full_duplex.hpp>
@@ -31,11 +32,12 @@ int main() {
 
     // listener
     endpoint_open(
-        asio_tcp::accept_state{io, 9081},
+        beast_ws::accept_state{io, 9081},
         std::queue<std::string>{},
         endpoint_compose(
             asio_tcp::acceptor,
-            asio_tcp::message,
+            beast_ws::acceptor,
+            beast_ws::message,
             endpoint(
                 event::read_message = [](auto& self) {
                     return promise([&](auto& resolve, auto const& msg) {
@@ -63,7 +65,8 @@ int main() {
         std::move(messages),
         endpoint_compose(
             asio_tcp::connector,
-            asio_tcp::message,
+            beast_ws::connector,
+            beast_ws::message,
             endpoint(
                 event::read_message = [](auto&) {
                     return tap([](auto& msg) {

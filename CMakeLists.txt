@@ -17,4 +17,4 @@ include_directories(${cppnow2018_full_duplex_project_SOURCE_DIR}/include)
 
 find_package(Threads)
 add_subdirectory(example/asio_tcp)
-#add_subdirectory(example/beast_ws)
+add_subdirectory(example/beast_ws)

@@ -28,12 +28,15 @@ namespace asio_tcp {
 
     struct accept_state {
         accept_state(asio::io_service& io, unsigned short port)
-            : socket(io)
+            : socket_(io)
             , endpoint(tcp::v4(), port)
             , acceptor()
         { }
 
-        tcp::socket socket;
+        tcp::socket& socket()
+        { return socket_; }
+
+        tcp::socket socket_;
         tcp::endpoint endpoint;
         std::optional<tcp::acceptor> acceptor;
     };
@@ -41,8 +44,8 @@ namespace asio_tcp {
     constexpr auto accept = [](auto& self) {
         return promise([&](auto& resolve, auto&&) {
             auto& state = self.state();
-            auto acceptor = tcp::acceptor(state.socket.get_io_service(), state.endpoint);
-            acceptor.async_accept(state.socket, [&](auto error) {
+            auto acceptor = tcp::acceptor(state.socket().get_io_service(), state.endpoint);
+            acceptor.async_accept(state.socket(), [&](auto error) {
                 (not error) ? resolve(self) : resolve(make_error(error));
             });
             state.acceptor = std::move(acceptor);
@@ -53,18 +56,21 @@ namespace asio_tcp {
 
     struct connect_state {
         connect_state(asio::io_service& io, unsigned short port)
-            : socket(io)
+            : socket_(io)
             , endpoint(tcp::v4(), port)
         { }
 
-        tcp::socket socket;
+        tcp::socket& socket()
+        { return socket_; }
+
+        tcp::socket socket_;
         tcp::endpoint endpoint;
     };
 
     constexpr auto connect = [](auto& self) {
         return promise([&](auto& resolve, auto&&) {
             auto& state = self.state();
-            state.socket.async_connect(state.endpoint, [&](auto error) {
+            state.socket().async_connect(state.endpoint, [&](auto error) {
                 (not error) ? resolve(self) : resolve(make_error(error));
             });
         });
@@ -76,7 +82,7 @@ namespace asio_tcp {
     struct read_length_fn {
         template <typename Resolve, typename Input>
         auto operator()(Resolve& resolve, Input&&) {
-            asio::async_read(self.state().socket, asio::buffer(buffer, 4), [&](auto error, size_t) {
+            asio::async_read(self.state().socket(), asio::buffer(buffer, 4), [&](auto error, size_t) {
                 uint32_t length = buffer[0] << 24
                                 | buffer[1] << 16
                                 | buffer[2] << 8
@@ -100,7 +106,7 @@ namespace asio_tcp {
         template <typename Resolve>
         auto operator()(Resolve& resolve, uint32_t length) {
             body.resize(length);
-            asio::async_read(self.state().socket, asio::buffer(body, length), [&](auto error, size_t) {
+            asio::async_read(self.state().socket(), asio::buffer(body, length), [&](auto error, size_t) {
                 (not error) ? resolve(body) : resolve(make_error(error));
             });
         }
@@ -143,10 +149,12 @@ namespace asio_tcp {
     };
 
     constexpr auto write_message = [](auto& self) {
+        tcp::socket& socket = self.state().socket();
+
         return do_(
-            promise(write_length_fn{self.state().socket}),
+            promise(write_length_fn{socket}),
             promise([&](auto& resolve, auto& message) {
-                asio::async_write(self.state().socket, asio::buffer(message, message.size()),
+                asio::async_write(socket, asio::buffer(message, message.size()),
                     [&](auto error, size_t) {
                         (not error) ? resolve(message) : resolve(make_error(error));
 					}
@@ -160,7 +168,7 @@ namespace asio_tcp {
     constexpr auto acceptor   = endpoint(event::init = accept);
     constexpr auto connector  = endpoint(event::init = connect);
 
-    constexpr auto raw_message = endpoint(
+    constexpr auto message = endpoint(
         event::read_message  = read_message,
         event::write_message = write_message
     );
